@@ -29,13 +29,15 @@ func CreateEventData() *EventData {
 	_, err = db.Exec(
 		`CREATE TABLE users (
 		id INTEGER PRIMARY KEY,
-		username TEXT NOT NULL,
-		password TEXT NOT NULL);`)
+		name TEXT NOT NULL,
+		uuid TEXT NOT NULL);
+	`)
 
 	if err != nil {
 		panic(err)
 	}
-	return &EventData{}
+
+	return &EventData{Database: db}
 }
 
 func StartDatabase() {
