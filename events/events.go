@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/goombaio/namegenerator"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -17,6 +18,12 @@ type EventPublisher struct {
 	Messages chan string
 }
 
+type User struct {
+	ID   int    `db:"id"`
+	Name string `db:"name"`
+	UUID string `db:"uuid"`
+}
+
 func CreateEventPublisher(rate time.Duration) *EventPublisher {
 	return &EventPublisher{Rate: rate, Messages: make(chan string)}
 }
@@ -27,7 +34,7 @@ func CreateEventData() *EventData {
 		panic(err)
 	}
 	_, err = db.Exec(
-		`CREATE TABLE users (
+		`CREATE TABLE IF NOT EXISTS users (
 		id INTEGER PRIMARY KEY,
 		name TEXT NOT NULL,
 		uuid TEXT NOT NULL);
@@ -40,7 +47,16 @@ func CreateEventData() *EventData {
 	return &EventData{Database: db}
 }
 
-func StartDatabase() {
+func (ed *EventData) BuilDatabaseMock() {
+	tx := ed.Database.MustBegin()
+	gen := namegenerator.NewNameGenerator(time.Now().Unix())
+	for i := 0; i < 10000000; i++ {
+		tx.MustExec("INSERT INTO users (name, uuid) VALUES ($1, $2)", gen.Generate(), uuid.NewString())
+	}
+	tx.Commit()
+}
+
+func (ed *EventData) StreamRows() {
 
 }
 

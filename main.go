@@ -8,7 +8,8 @@ import (
 
 func main() {
 	publisher := events.CreateEventPublisher(time.Second)
-	events.CreateEventData()
+	// evtData := events.CreateEventData()
+	// evtData.StartDatabase()
 	for str := range publisher.Poll() {
 		fmt.Println(str)
 	}
