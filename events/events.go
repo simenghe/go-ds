@@ -11,6 +11,7 @@ import (
 
 type EventData struct {
 	Database *sqlx.DB
+	Rate     time.Duration
 }
 
 type EventPublisher struct {
@@ -24,11 +25,16 @@ type User struct {
 	UUID string `db:"uuid"`
 }
 
+func (u *User) Edit(name string, uuid string) {
+	u.Name = name
+	u.UUID = uuid
+}
+
 func CreateEventPublisher(rate time.Duration) *EventPublisher {
 	return &EventPublisher{Rate: rate, Messages: make(chan string)}
 }
 
-func CreateEventData() *EventData {
+func CreateEventData(rate time.Duration) *EventData {
 	db, err := sqlx.Connect("sqlite3", "database.db")
 	if err != nil {
 		panic(err)
@@ -44,7 +50,7 @@ func CreateEventData() *EventData {
 		panic(err)
 	}
 
-	return &EventData{Database: db}
+	return &EventData{Database: db, Rate: rate}
 }
 
 func (ed *EventData) BuilDatabaseMock() {
@@ -56,8 +62,25 @@ func (ed *EventData) BuilDatabaseMock() {
 	tx.Commit()
 }
 
-func (ed *EventData) StreamRows() {
+func (ed *EventData) StreamRows() <-chan User {
+	users := make(chan User)
+	rows, err := ed.Database.Queryx("SELECT * FROM users")
+	if err != nil {
+		panic(err)
+	}
+	go func() {
+		for rows.Next() {
+			var curUser User
+			err = rows.StructScan(&curUser)
+			users <- curUser
+			time.Sleep(ed.Rate)
+		}
 
+	}()
+	if err != nil {
+		panic(err)
+	}
+	return users
 }
 
 func (e *EventPublisher) Poll() <-chan string {
