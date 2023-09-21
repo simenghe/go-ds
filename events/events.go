@@ -20,9 +20,9 @@ type EventPublisher struct {
 }
 
 type User struct {
-	ID   int    `db:"id"`
-	Name string `db:"name"`
-	UUID string `db:"uuid"`
+	ID   int    `db:"id" json:"id"`
+	Name string `db:"name" json:"name"`
+	UUID string `db:"uuid" json:"uuid"`
 }
 
 func (u *User) Edit(name string, uuid string) {
@@ -56,7 +56,7 @@ func CreateEventData(rate time.Duration) *EventData {
 func (ed *EventData) BuilDatabaseMock() {
 	tx := ed.Database.MustBegin()
 	gen := namegenerator.NewNameGenerator(time.Now().Unix())
-	for i := 0; i < 10000000; i++ {
+	for i := 0; i < 1000; i++ {
 		tx.MustExec("INSERT INTO users (name, uuid) VALUES ($1, $2)", gen.Generate(), uuid.NewString())
 	}
 	tx.Commit()
